@@ -1,0 +1,6 @@
+{
+  "priority": 10,
+  "path": "libopenai_plugin.so",
+  "name": "openai_plugin",
+  "description": "An OpenAI LLM provider for testing"
+}

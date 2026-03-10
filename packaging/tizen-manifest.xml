@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.tizenclaw-dummy-backend" version="1.0.0">
+    <label>TizenClaw LLM Dummy Backend (RPK)</label>
+    <description>Dummy LLM Backend for TizenClaw</description>
+    <profile name="common" />
+    <metadata key="http://tizen.org/metadata/tizenclaw/llm-backend" value="true" />
+</manifest>
