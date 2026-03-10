@@ -1,6 +1,8 @@
 {
+  "name": "plugin-sample",
+  "description": "An OpenAI LLM provider for testing",
   "priority": 10,
-  "path": "libopenai_plugin.so",
-  "name": "openai_plugin",
-  "description": "An OpenAI LLM provider for testing"
+  "api_key": "YOUR_OPENAI_API_KEY",
+  "model": "gpt-3.5-turbo",
+  "endpoint": "https://api.openai.com/v1/chat/completions"
 }

@@ -1,5 +1,5 @@
-Name:       org.tizen.tizenclaw-openai-backend
-Summary:    TizenClaw OpenAI LLM Backend Plugin
+Name:       org.tizen.tizenclaw-llm-plugin-sample
+Summary:    TizenClaw Sample LLM Backend Plugin
 Version:    1.0.0
 Release:    1
 Group:      System/Service
@@ -7,7 +7,7 @@ License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1001: tizen-manifest.xml
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(tizen-llm-backend)
+BuildRequires:  pkgconfig(tizenclaw-llm-backend)
 BuildRequires:  pkgconfig(tizen-core)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(dlog)
@@ -22,7 +22,7 @@ BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(capi-appfw-tizen-action)
 
 %description
-OpenAI LLM Backend for TizenClaw
+Sample LLM Backend for TizenClaw
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -34,17 +34,17 @@ cp %{SOURCE1001} .
 
 %install
 %make_install
-mkdir -p %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend
-cp tizen-manifest.xml %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/
+mkdir -p %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample
+cp tizen-manifest.xml %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample/
 
 %files
 %defattr(-,root,root,-)
-/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/tizen-manifest.xml
-/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/res/plugin_llm_config.json
-/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/lib/libopenai_plugin.so
+/opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample/tizen-manifest.xml
+/opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample/res/plugin_llm_config.json
+/opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample/lib/libplugin-sample.so
 
 # Signing
-%define tizen_sign_base %{_prefix}/apps/org.tizen.tizenclaw-openai-backend
+%define tizen_sign_base %{_prefix}/apps/org.tizen.tizenclaw-llm-plugin-sample
 %define tizen_sign 1
 %define tizen_author_sign 1
 %define tizen_dist_sign 1
