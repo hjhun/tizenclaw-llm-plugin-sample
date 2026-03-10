@@ -30,15 +30,13 @@ OpenAI LLM Backend for TizenClaw
 cp %{SOURCE1001} .
 
 %build
-cd sample/llm-backend-plugin
 %cmake .
 %__make %{?_smp_mflags}
 
 %install
-cd sample/llm-backend-plugin
 %make_install
 mkdir -p %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend
-cp ../../tizen-manifest.xml %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/
+cp tizen-manifest.xml %{buildroot}/opt/usr/globalapps/org.tizen.tizenclaw-openai-backend/
 
 %files
 %defattr(-,root,root,-)
