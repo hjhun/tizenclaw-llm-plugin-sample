@@ -18,7 +18,6 @@ BuildRequires:  pkgconfig(pkgmgr)
 BuildRequires:  pkgconfig(pkgmgr-info)
 BuildRequires:  pkgconfig(pkgmgr-installer)
 BuildRequires:  pkgconfig(pkgmgr-parser)
-BuildRequires:  jsoncpp-devel
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(capi-appfw-tizen-action)
 

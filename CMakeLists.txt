@@ -11,10 +11,17 @@ add_library(openai_plugin SHARED
 
 # Link against tizenclaw-llm-plugin for headers
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(PLUGIN_DEPS REQUIRED tizen-llm-backend libcurl dlog nlohmann_json)
+pkg_check_modules(PLUGIN_REQUIRED REQUIRED
+    tizen-llm-backend
+    libcurl
+    dlog
+)
 
-target_include_directories(openai_plugin PRIVATE ${PLUGIN_DEPS_INCLUDE_DIRS})
-target_link_libraries(openai_plugin PRIVATE ${PLUGIN_DEPS_LIBRARIES})
+target_include_directories(openai_plugin
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
+) PRIVATE ${PLUGIN_REQUIRED_INCLUDE_DIRS})
+target_link_libraries(openai_plugin PRIVATE ${PLUGIN_REQUIRED_LIBRARIES})
 
 # Install rules
 # For Tizen RPK, files usually go into /opt/usr/globalapps/<pkgname>/res
