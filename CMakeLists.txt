@@ -26,7 +26,7 @@ target_link_libraries(plugin-sample PRIVATE ${PLUGIN_REQUIRED_LIBRARIES})
 
 # Install rules
 # For Tizen RPK, files usually go into /opt/usr/globalapps/<pkgname>/res
-set(RPK_APP_DIR /opt/usr/globalapps/org.tizen.tizenclaw-llm-plugin-sample)
+set(RPK_APP_DIR /usr/apps/org.tizen.tizenclaw-llm-plugin-sample)
 
 install(TARGETS plugin-sample
     LIBRARY DESTINATION ${RPK_APP_DIR}/lib
