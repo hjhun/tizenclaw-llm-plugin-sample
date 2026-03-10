@@ -37,10 +37,12 @@ cp %{SOURCE1001} .
 mkdir -p %{buildroot}/usr/apps/org.tizen.tizenclaw-llm-plugin-sample
 mkdir -p %{buildroot}/usr/share/packages
 cp tizen-manifest.xml %{buildroot}/usr/share/packages/org.tizen.tizenclaw-llm-plugin-sample.xml
+cp tizen-manifest.xml %{buildroot}/usr/apps/org.tizen.tizenclaw-llm-plugin-sample/tizen-manifest.xml
 
 %files
 %defattr(-,root,root,-)
 /usr/share/packages/org.tizen.tizenclaw-llm-plugin-sample.xml
+/usr/apps/org.tizen.tizenclaw-llm-plugin-sample/tizen-manifest.xml
 /usr/apps/org.tizen.tizenclaw-llm-plugin-sample/res/plugin_llm_config.json
 /usr/apps/org.tizen.tizenclaw-llm-plugin-sample/lib/libplugin-sample.so
 
