@@ -20,7 +20,8 @@ pkg_check_modules(PLUGIN_REQUIRED REQUIRED
 target_include_directories(openai_plugin
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
-) PRIVATE ${PLUGIN_REQUIRED_INCLUDE_DIRS})
+    ${PLUGIN_REQUIRED_INCLUDE_DIRS}
+)
 target_link_libraries(openai_plugin PRIVATE ${PLUGIN_REQUIRED_LIBRARIES})
 
 # Install rules
