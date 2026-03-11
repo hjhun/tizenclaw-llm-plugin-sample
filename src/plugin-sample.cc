@@ -1,21 +1,38 @@
+/*
+ * Copyright (c) 2026 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <dlog.h>
+#include <tizenclaw/llm-backend/tizenclaw_curl.h>
+#include <tizenclaw/llm-backend/tizenclaw_llm_backend.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <string>
 
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
-#define LOG_TAG "TIZENCLAW_LLM_PLUGIN"
+#undef PROJECT_TAG
+#define PROJECT_TAG "TIZENCLAW_LLM_PLUGIN"
 
 #include "nlohmann/json.hpp"
-#include <tizenclaw/llm-backend/tizenclaw_llm_backend.h>
-#include <tizenclaw/llm-backend/tizenclaw_curl.h>
-#include <unistd.h>
+
+#undef EXPORT
+#define EXPORT __attribute__((visibility("default")))
 
 using json = nlohmann::json;
 
-extern "C" {
+namespace {
 
 struct OpenAIBackend {
   std::string name;
@@ -24,20 +41,22 @@ struct OpenAIBackend {
   std::string endpoint;
 };
 
-static OpenAIBackend* g_backend = nullptr;
+OpenAIBackend* g_backend = nullptr;
 
 struct PluginWriteContext {
   std::string* buffer;
 };
 
-static void PluginWriteCallback(const char* chunk, void* user_data) {
+void PluginWriteCallback(const char* chunk, void* user_data) {
   auto* ctx = static_cast<PluginWriteContext*>(user_data);
   if (chunk && ctx->buffer) {
     ctx->buffer->append(chunk);
   }
 }
 
-bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
+}  // namespace
+
+extern "C" EXPORT bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
   if (g_backend) return true;
 
   g_backend = new (std::nothrow) OpenAIBackend();
@@ -55,7 +74,7 @@ bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
       if (config.contains("model")) g_backend->model = config["model"];
       if (config.contains("endpoint")) g_backend->endpoint = config["endpoint"];
     } catch (...) {
-      dlog_print(DLOG_ERROR, LOG_TAG, "[Plugin Sample] Failed to parse config JSON");
+      dlog_print(DLOG_ERROR, PROJECT_TAG, "[Plugin Sample] Failed to parse config JSON");
     }
   }
 
@@ -63,24 +82,24 @@ bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
     const char* env_key = getenv("OPENAI_API_KEY");
     if (env_key) g_backend->api_key = env_key;
   }
-  dlog_print(DLOG_INFO, LOG_TAG, "[Plugin Sample] Initialized (model: %s, endpoint: %s)",
+  dlog_print(DLOG_INFO, PROJECT_TAG, "[Plugin Sample] Initialized (model: %s, endpoint: %s)",
              g_backend->model.c_str(), g_backend->endpoint.c_str());
   return true;
 }
 
-const char* TIZENCLAW_LLM_BACKEND_GET_NAME(void) {
+extern "C" EXPORT const char* TIZENCLAW_LLM_BACKEND_GET_NAME(void) {
   return g_backend ? g_backend->name.c_str() : "unknown";
 }
 
-void TIZENCLAW_LLM_BACKEND_SHUTDOWN(void) {
+extern "C" EXPORT void TIZENCLAW_LLM_BACKEND_SHUTDOWN(void) {
   if (g_backend) {
-    dlog_print(DLOG_INFO, LOG_TAG, "[Plugin Sample] Shutdown");
+    dlog_print(DLOG_INFO, PROJECT_TAG, "[Plugin Sample] Shutdown");
     delete g_backend;
     g_backend = nullptr;
   }
 }
 
-tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
+extern "C" EXPORT tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
     tizenclaw_llm_messages_h messages_arr, tizenclaw_llm_tools_h tools_arr,
     tizenclaw_llm_backend_chunk_cb on_chunk, void* user_data,
     const char* system_prompt) {
@@ -245,7 +264,7 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
       tizenclaw_curl_get_response_code(curl, &http_code);
       tizenclaw_llm_response_set_http_status(response, http_code);
 
-      dlog_print(DLOG_DEBUG, LOG_TAG, "[Plugin Sample] Raw response: %s", readBuffer.c_str());
+      dlog_print(DLOG_DEBUG, PROJECT_TAG, "[Plugin Sample] Raw response: %s", readBuffer.c_str());
 
       try {
         auto resp_json = json::parse(readBuffer);
@@ -310,5 +329,3 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
 
   return response;
 }
-
-}  // extern "C"
