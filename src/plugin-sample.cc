@@ -1,10 +1,17 @@
 #include <curl/curl.h>
+#include <dlog.h>
 
 #include <iostream>
 #include <string>
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "TIZENCLAW_LLM_PLUGIN"
+
 #include "nlohmann/json.hpp"
 #include "tizenclaw_llm_backend.h"
+#include <unistd.h>
 
 using json = nlohmann::json;
 
@@ -43,7 +50,7 @@ bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
       if (config.contains("model")) g_backend->model = config["model"];
       if (config.contains("endpoint")) g_backend->endpoint = config["endpoint"];
     } catch (...) {
-      std::cerr << "[Plugin Sample] Failed to parse config JSON" << std::endl;
+      dlog_print(DLOG_ERROR, LOG_TAG, "[Plugin Sample] Failed to parse config JSON");
     }
   }
 
@@ -51,8 +58,8 @@ bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
     const char* env_key = getenv("OPENAI_API_KEY");
     if (env_key) g_backend->api_key = env_key;
   }
-  std::cout << "[Plugin Sample] Initialized (model: " << g_backend->model << ", endpoint: " << g_backend->endpoint << ")"
-            << std::endl;
+  dlog_print(DLOG_INFO, LOG_TAG, "[Plugin Sample] Initialized (model: %s, endpoint: %s)",
+             g_backend->model.c_str(), g_backend->endpoint.c_str());
   return true;
 }
 
@@ -62,7 +69,7 @@ const char* TIZENCLAW_LLM_BACKEND_GET_NAME(void) {
 
 void TIZENCLAW_LLM_BACKEND_SHUTDOWN(void) {
   if (g_backend) {
-    std::cout << "[Plugin Sample] Shutdown" << std::endl;
+    dlog_print(DLOG_INFO, LOG_TAG, "[Plugin Sample] Shutdown");
     delete g_backend;
     g_backend = nullptr;
   }
@@ -225,12 +232,30 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_str.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+
+    const char* ca_paths[] = {
+        "/etc/ssl/certs/ca-certificates.crt",
+        "/etc/ssl/ca-bundle.pem",
+        "/etc/pki/tls/certs/ca-bundle.crt",
+        "/usr/share/ca-certificates/ca-bundle.crt",
+        nullptr
+    };
+    for (int i = 0; ca_paths[i]; ++i) {
+      if (access(ca_paths[i], R_OK) == 0) {
+        curl_easy_setopt(curl, CURLOPT_CAINFO, ca_paths[i]);
+        break;
+      }
+    }
 
     CURLcode res = curl_easy_perform(curl);
     if (res == CURLE_OK) {
       long http_code = 0;
       curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
       tizenclaw_llm_response_set_http_status(response, http_code);
+
+      dlog_print(DLOG_DEBUG, LOG_TAG, "[Plugin Sample] Raw response: %s", readBuffer.c_str());
 
       try {
         auto resp_json = json::parse(readBuffer);
