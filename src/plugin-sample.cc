@@ -9,7 +9,8 @@
 #define LOG_TAG "TIZENCLAW_LLM_PLUGIN"
 
 #include "nlohmann/json.hpp"
-#include "tizenclaw_llm_backend.h"
+#include <tizenclaw/llm-backend/tizenclaw_llm_backend.h>
+#include <tizenclaw/llm-backend/tizenclaw_curl.h>
 #include <unistd.h>
 
 using json = nlohmann::json;
@@ -222,26 +223,26 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
 
   std::string payload_str = payload.dump();
 
-  tizenclaw_llm_curl_h curl = nullptr;
-  if (tizenclaw_llm_curl_create(&curl) == TIZENCLAW_ERROR_NONE) {
-    tizenclaw_llm_curl_set_url(curl, g_backend->endpoint.c_str());
+  tizenclaw_curl_h curl = nullptr;
+  if (tizenclaw_curl_create(&curl) == TIZENCLAW_ERROR_NONE) {
+    tizenclaw_curl_set_url(curl, g_backend->endpoint.c_str());
 
-    tizenclaw_llm_curl_add_header(curl, "Content-Type: application/json");
+    tizenclaw_curl_add_header(curl, "Content-Type: application/json");
     std::string auth_header = "Authorization: Bearer " + g_backend->api_key;
-    tizenclaw_llm_curl_add_header(curl, auth_header.c_str());
+    tizenclaw_curl_add_header(curl, auth_header.c_str());
 
-    tizenclaw_llm_curl_set_post_data(curl, payload_str.c_str());
+    tizenclaw_curl_set_post_data(curl, payload_str.c_str());
 
     std::string readBuffer;
     PluginWriteContext write_ctx;
     write_ctx.buffer = &readBuffer;
-    tizenclaw_llm_curl_set_write_callback(curl, PluginWriteCallback, &write_ctx);
-    tizenclaw_llm_curl_set_timeout(curl, 10, 60);
+    tizenclaw_curl_set_write_callback(curl, PluginWriteCallback, &write_ctx);
+    tizenclaw_curl_set_timeout(curl, 10, 60);
 
-    int res = tizenclaw_llm_curl_perform(curl);
+    int res = tizenclaw_curl_perform(curl);
     if (res == TIZENCLAW_ERROR_NONE) {
       long http_code = 0;
-      tizenclaw_llm_curl_get_response_code(curl, &http_code);
+      tizenclaw_curl_get_response_code(curl, &http_code);
       tizenclaw_llm_response_set_http_status(response, http_code);
 
       dlog_print(DLOG_DEBUG, LOG_TAG, "[Plugin Sample] Raw response: %s", readBuffer.c_str());
@@ -299,12 +300,12 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
             response, "Failed to parse OpenAI response");
       }
     } else {
-      const char* err = tizenclaw_llm_curl_get_error_message(curl);
+      const char* err = tizenclaw_curl_get_error_message(curl);
       std::string err_str =
           std::string("CURL request failed: ") + (err ? err : "Unknown error");
       tizenclaw_llm_response_set_error_message(response, err_str.c_str());
     }
-    tizenclaw_llm_curl_destroy(curl);
+    tizenclaw_curl_destroy(curl);
   }
 
   return response;
