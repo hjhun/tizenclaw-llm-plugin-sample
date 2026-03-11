@@ -12,7 +12,7 @@ add_library(plugin-sample SHARED
 # Link against tizenclaw-llm-plugin for headers
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PLUGIN_REQUIRED REQUIRED
-    tizenclaw-llm-backend
+    tizenclaw-core
     libcurl
     dlog
 )

@@ -8,7 +8,7 @@ Source0:    %{name}-%{version}.tar.gz
 Source1001: tizen-manifest.xml
 Source1002: %{name}.manifest
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(tizenclaw-llm-backend)
+BuildRequires:  pkgconfig(tizenclaw-core)
 BuildRequires:  pkgconfig(tizen-core)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(dlog)
