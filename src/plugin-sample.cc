@@ -1,4 +1,3 @@
-#include <curl/curl.h>
 #include <dlog.h>
 
 #include <iostream>
@@ -26,10 +25,15 @@ struct OpenAIBackend {
 
 static OpenAIBackend* g_backend = nullptr;
 
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb,
-                            void* userp) {
-  ((std::string*)userp)->append((char*)contents, size * nmemb);
-  return size * nmemb;
+struct PluginWriteContext {
+  std::string* buffer;
+};
+
+static void PluginWriteCallback(const char* chunk, void* user_data) {
+  auto* ctx = static_cast<PluginWriteContext*>(user_data);
+  if (chunk && ctx->buffer) {
+    ctx->buffer->append(chunk);
+  }
 }
 
 bool TIZENCLAW_LLM_BACKEND_INITIALIZE(const char* config_json_str) {
@@ -218,41 +222,26 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
 
   std::string payload_str = payload.dump();
 
-  CURL* curl = curl_easy_init();
-  if (curl) {
-    struct curl_slist* headers = NULL;
-    headers = curl_slist_append(headers, "Content-Type: application/json");
+  tizenclaw_llm_curl_h curl = nullptr;
+  if (tizenclaw_llm_curl_create(&curl) == TIZENCLAW_ERROR_NONE) {
+    tizenclaw_llm_curl_set_url(curl, g_backend->endpoint.c_str());
+
+    tizenclaw_llm_curl_add_header(curl, "Content-Type: application/json");
     std::string auth_header = "Authorization: Bearer " + g_backend->api_key;
-    headers = curl_slist_append(headers, auth_header.c_str());
+    tizenclaw_llm_curl_add_header(curl, auth_header.c_str());
+
+    tizenclaw_llm_curl_set_post_data(curl, payload_str.c_str());
 
     std::string readBuffer;
-    curl_easy_setopt(curl, CURLOPT_URL,
-                     g_backend->endpoint.c_str());
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_str.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    PluginWriteContext write_ctx;
+    write_ctx.buffer = &readBuffer;
+    tizenclaw_llm_curl_set_write_callback(curl, PluginWriteCallback, &write_ctx);
+    tizenclaw_llm_curl_set_timeout(curl, 10, 60);
 
-    const char* ca_paths[] = {
-        "/etc/ssl/certs/ca-certificates.crt",
-        "/etc/ssl/ca-bundle.pem",
-        "/etc/pki/tls/certs/ca-bundle.crt",
-        "/usr/share/ca-certificates/ca-bundle.crt",
-        nullptr
-    };
-    for (int i = 0; ca_paths[i]; ++i) {
-      if (access(ca_paths[i], R_OK) == 0) {
-        curl_easy_setopt(curl, CURLOPT_CAINFO, ca_paths[i]);
-        break;
-      }
-    }
-
-    CURLcode res = curl_easy_perform(curl);
-    if (res == CURLE_OK) {
+    int res = tizenclaw_llm_curl_perform(curl);
+    if (res == TIZENCLAW_ERROR_NONE) {
       long http_code = 0;
-      curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+      tizenclaw_llm_curl_get_response_code(curl, &http_code);
       tizenclaw_llm_response_set_http_status(response, http_code);
 
       dlog_print(DLOG_DEBUG, LOG_TAG, "[Plugin Sample] Raw response: %s", readBuffer.c_str());
@@ -310,12 +299,12 @@ tizenclaw_llm_response_h TIZENCLAW_LLM_BACKEND_CHAT(
             response, "Failed to parse OpenAI response");
       }
     } else {
-      std::string err =
-          std::string("CURL request failed: ") + curl_easy_strerror(res);
-      tizenclaw_llm_response_set_error_message(response, err.c_str());
+      const char* err = tizenclaw_llm_curl_get_error_message(curl);
+      std::string err_str =
+          std::string("CURL request failed: ") + (err ? err : "Unknown error");
+      tizenclaw_llm_response_set_error_message(response, err_str.c_str());
     }
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
+    tizenclaw_llm_curl_destroy(curl);
   }
 
   return response;
